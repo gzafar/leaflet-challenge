@@ -2,7 +2,7 @@ console.log("logic.js loaded")
 
 let queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
-d3.json(queryUrl).then(function(data) {
+d3.json(queryUrl).then(function (data) {
   createFeatures(data.features);
 });
 
@@ -10,15 +10,57 @@ d3.json(queryUrl).then(function(data) {
 function createFeatures(earthquakeData) {
 
   function onEachFeature(feature, layer) {
-    layer.bindPopup("<h3>" + feature.properties.place +
-      "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
+
+    let format = d3.timeFormat("%d-%m-%Y %H:%M");
+
+    layer.bindPopup(`<h1> Place: ${feature.properties.place}</h1>
+      <hr><p> Date: ${format(feature.properties.time)}</p>
+      <hr><p> Magnitude: ${feature.properties.mag}</p>
+      <hr><p> Depth: ${feature.geometry.coordinates[2]}</p>`);
   }
 
   let earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature
+
+    onEachFeature: onEachFeature,
+
+    pointToLayer: function (feature, latlng) {
+      return L.circleMarker(latlng, {
+        radius: markerSize(feature.properties.mag),
+        fillColor: markerColor(feature.geometry.coordinates[2]),
+        color: "#000000",
+        weight: 1,
+        fillOpacity: 10
+      });
+    }
+
   });
 
   createMap(earthquakes);
+}
+
+function markerSize(magnitude) {
+  return magnitude * 3;
+}
+
+function markerColor(depth) {
+  if (depth <= 20) {
+    return "#fa9fb5"
+  }
+  else if (depth <= 40) {
+    return "#f768a1"
+  }
+  else if (depth <= 60) {
+    return "#dd3497"
+  }
+  else if (depth <= 80) {
+    return "#ae017e"
+  }
+  else if (depth <= 100) {
+    return "#7a0177"
+  }
+  else {
+    return "#49006a"
+  }
 }
 
 function createMap(earthquakes) {
@@ -43,5 +85,10 @@ function createMap(earthquakes) {
     zoom: 5,
     layers: [baseMap, earthquakes]
   });
+
+  var info = L.control({
+    position: "bottomright"
+  });
+
 
 }
