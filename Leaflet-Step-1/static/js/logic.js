@@ -11,7 +11,7 @@ function createFeatures(earthquakeData) {
 
   function onEachFeature(feature, layer) {
 
-    let format = d3.timeFormat("%d-%m-%Y %H:%M");
+    let format = d3.timeFormat("%m-%d-%Y %H:%M");
 
     layer.bindPopup(`<h1> Place: ${feature.properties.place}</h1>
       <hr><p> Date: ${format(feature.properties.time)}</p>
@@ -63,6 +63,35 @@ function markerColor(depth) {
   }
 }
 
+function getColor(d) {
+  return  d > 100 ? "#49006a" :
+          d > 80  ? "#7a0177" :
+          d > 60  ? "#ae017e" :
+          d > 40  ? "#dd3497" :
+          d > 20  ? "#f768a1" :
+                    "#fa9fb5";
+}
+
+let legend = L.control({position: "bottomright"});
+
+legend.onAdd = function() {
+
+  let div = L.DomUtil.create("div", "info legend");
+    depth = [0, 20, 40, 60, 80, 100],
+    labels = [];
+
+    for (var i = 0; i < depth.length; i++) {
+      div.innerHTML +=
+          '<i style="background:' + getColor(depth[i] + 1) + '"></i> ' +
+          depth[i] + (depth[i + 1] ? '&ndash;' + depth[i + 1] + '<br>' : '+');
+  }
+
+  return div;
+
+};
+
+
+
 function createMap(earthquakes) {
 
   let baseMap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -86,9 +115,8 @@ function createMap(earthquakes) {
     layers: [baseMap, earthquakes]
   });
 
-  var info = L.control({
-    position: "bottomright"
-  });
+  legend.addTo(myMap);
 
 
 }
+
